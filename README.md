@@ -10,8 +10,8 @@ Third project in a three-part agentic-AI series:
 ## Quickstart
 
 ```bash
-git clone https://github.com/sahilmdeshmukh/tool-use-specialist-slm.git
-cd tool-use-specialist-slm
+git clone https://github.com/sahilmdeshmukh/function-call-finetune.git
+cd function-call-finetune
 uv sync
 cp .env.example .env  # fill in GROQ_API_KEY + GEMINI_API_KEY
 make data

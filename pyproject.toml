@@ -1,7 +1,7 @@
 [project]
-name = "tool-use-specialist-slm"
+name = "function-call-finetune"
 version = "0.1.0"
-description = "Fine-tuned Gemma 4 E4B tool-use specialist"
+description = "Fine-tuned Gemma 4 E4B for structured function calling"
 requires-python = ">=3.12"
 dependencies = [
     "datasets>=2.19.0",
