@@ -36,7 +36,7 @@ Total project cost target: $0. No paid APIs.
 - BFCL-style metrics: function-name match, args-key match, args-value match
 
 ## Status
-- [ ] Day 1: dataset prep (xLAM → Gemma chat-template format, splits)
+- [x] Day 1: dataset prep (xLAM → Gemma chat-template format, splits)
 - [ ] Day 2: QLoRA training + push to HF Hub
 - [ ] Day 3: free-only eval harness
 - [ ] Day 4: model card + README + (optional) Spaces demo
