@@ -151,9 +151,6 @@ def load_datasets(cfg: TrainConfig):
     train_ds = load_dataset("json", data_files=cfg.train_file, split="train")
     val_ds = load_dataset("json", data_files=cfg.val_file, split="train")
 
-    # Cap sequence length — Gemma 4's 256k vocab makes logits huge at long sequences
-    tokenizer.model_max_length = 512
-
     print(f"Train examples : {len(train_ds):,}")
     print(f"Val examples   : {len(val_ds):,}")
 
@@ -176,6 +173,7 @@ def train(cfg: TrainConfig):
 
     # --- Build model ---
     model, tokenizer = load_model_and_tokenizer(cfg)
+    tokenizer.model_max_length = 512  # cap seq len — Gemma 4's 256k vocab makes logits huge
     model = attach_lora(model, cfg)
 
     # --- Data ---
