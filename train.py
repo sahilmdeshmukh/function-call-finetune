@@ -127,7 +127,9 @@ def attach_lora(model, cfg: TrainConfig):
         r=cfg.lora_r,                          # Rank: size of the adapter matrices
         lora_alpha=cfg.lora_alpha,             # Scaling factor
         lora_dropout=cfg.lora_dropout,         # Dropout for regularization
-        target_modules=cfg.lora_target_modules, # Which layers get adapters
+        # Regex targets only language_model layers — skips vision_tower (Gemma4ClippableLinear)
+        # Also includes per_layer_input_gate and per_layer_projection (Gemma 4-specific)
+        target_modules=r"language_model\..*\.(q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj|per_layer_input_gate|per_layer_projection)",
         bias="none",                           # Don't train bias terms (saves memory)
         task_type="CAUSAL_LM",                 # We're doing causal language modelling
     )
