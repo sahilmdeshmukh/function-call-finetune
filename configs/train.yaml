@@ -19,7 +19,7 @@ lora_target_modules: # Which layers inside the model to attach adapters to
   - down_proj
 
 # Training hyperparameters
-learning_rate: 2e-4                    # Step size for each weight update
+learning_rate: 0.0002                  # Step size for each weight update (2e-4 as plain float — YAML parses scientific notation as string)
 per_device_train_batch_size: 2         # Examples processed per GPU step
 gradient_accumulation_steps: 8         # Accumulate 8 steps → effective batch of 16
 num_train_epochs: 1                    # One full pass through the dataset
