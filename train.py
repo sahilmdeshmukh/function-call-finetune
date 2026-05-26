@@ -193,7 +193,7 @@ def train(cfg: TrainConfig):
         logging_steps=cfg.logging_steps,
         save_steps=cfg.save_steps,
         eval_steps=cfg.eval_steps,
-        evaluation_strategy="steps",
+        eval_strategy="steps",
         save_total_limit=cfg.save_total_limit,
         load_best_model_at_end=True,        # At the end, restore the best checkpoint
         metric_for_best_model="eval_loss",  # "best" = lowest validation loss
