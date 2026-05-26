@@ -13,8 +13,9 @@ TRL (SFTTrainer) · bitsandbytes (4-bit) · datasets · wandb · pydantic
 Eval baselines via Groq (free) and Gemini AI Studio (free).
 
 ## Base model
-google/gemma-4-e4b-it (4B params, edge-tier, Apache-2.0)
-Released April 2026. Chat template uses <start_of_turn>user / <start_of_turn>model.
+google/gemma-2-2b-it (2B params, text-only, Apache-2.0)
+Switched from Gemma 4 E4B — the multimodal variant was ~8B effective params and too slow on T4.
+Gemma 2 2B is text-only, trains in ~1-2 hrs on free T4. Chat template: <start_of_turn>user / <start_of_turn>model.
 
 ## Dataset
 Salesforce/xlam-function-calling-60k (Hugging Face).
