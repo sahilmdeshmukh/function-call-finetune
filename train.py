@@ -3,18 +3,12 @@ import yaml
 import argparse
 from pathlib import Path
 from dataclasses import dataclass, field
-from typing import Optional
 
 import gc
 import torch
 from datasets import load_dataset
-from transformers import (
-    AutoTokenizer,
-    AutoModelForCausalLM,
-    BitsAndBytesConfig,
-    TrainingArguments,
-)
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from peft import LoraConfig, get_peft_model
 from trl import SFTTrainer, SFTConfig
 from huggingface_hub import login as hf_login
 import wandb
@@ -26,7 +20,7 @@ load_dotenv()  # reads .env file into os.environ
 @dataclass
 class TrainConfig:
     """All training settings, loaded from configs/train.yaml."""
-    model_name: str = "google/gemma-4-e4b-it"
+    model_name: str = "google/gemma-2-2b-it"
     output_dir: str = "checkpoints/gemma-tool"
 
     # LoRA
@@ -60,7 +54,7 @@ class TrainConfig:
     wandb_project: str = "tool-use-specialist"
 
     # Hub
-    hub_model_id: str = "sahilmdeshmukh/gemma-4-e4b-tool-use-lora"
+    hub_model_id: str = "sahilmdeshmukh/gemma-2-2b-tool-use-lora"
 
 
 def load_config(path: str) -> TrainConfig:
@@ -71,7 +65,7 @@ def load_config(path: str) -> TrainConfig:
 
 
 def load_model_and_tokenizer(cfg: TrainConfig):
-    """Load Gemma 4 in 4-bit NF4 quantization + its tokenizer."""
+    """Load model in 4-bit NF4 quantization + its tokenizer."""
     hf_token = os.getenv("HF_TOKEN")
 
     # --- Tokenizer ---
@@ -110,12 +104,6 @@ def load_model_and_tokenizer(cfg: TrainConfig):
         token=hf_token,
         low_cpu_mem_usage=True,  # stream weights to GPU instead of loading all in CPU RAM first
     )
-
-    # Manually enable gradient checkpointing instead of prepare_model_for_kbit_training.
-    # The latter casts layer norms to float32 which causes a 10GB spike on T4.
-    # These two calls give the same training behaviour without touching weight dtypes.
-    model.gradient_checkpointing_enable()
-    model.enable_input_require_grads()
 
     return model, tokenizer
 
@@ -171,6 +159,7 @@ def train(cfg: TrainConfig):
 
     # --- Build model ---
     model, tokenizer = load_model_and_tokenizer(cfg)
+    tokenizer.model_max_length = 1024  # cap sequence length — keeps steps fast
     model = attach_lora(model, cfg)
 
     # --- Data ---
@@ -239,7 +228,7 @@ def train(cfg: TrainConfig):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="QLoRA fine-tune Gemma 4 E4B")
+    parser = argparse.ArgumentParser(description="QLoRA fine-tune for tool use")
     parser.add_argument(
         "--config",
         type=str,
