@@ -207,7 +207,7 @@ def train(cfg: TrainConfig):
     # and logging for you. You just hand it the model, data, and config.
     trainer = SFTTrainer(
         model=model,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         args=sft_cfg,
         train_dataset=train_ds,
         eval_dataset=val_ds,
