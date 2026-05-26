@@ -5,6 +5,7 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
 
+import gc
 import torch
 from datasets import load_dataset
 from transformers import (
@@ -98,17 +99,21 @@ def load_model_and_tokenizer(cfg: TrainConfig):
     # --- Model ---
     # device_map="auto" lets HuggingFace decide which GPU/CPU layers go where.
     # On a single T4, everything lands on cuda:0.
+    # Free any leftover GPU memory from previous runs before loading
+    gc.collect()
+    torch.cuda.empty_cache()
+
     model = AutoModelForCausalLM.from_pretrained(
         cfg.model_name,
         quantization_config=bnb_config,
         device_map="auto",
         token=hf_token,
+        low_cpu_mem_usage=True,  # stream weights to GPU instead of loading all in CPU RAM first
     )
 
-    # Required step before attaching LoRA to a quantized model.
-    # Casts certain layers (like layer norms) back to float32 for training stability,
-    # and enables gradient checkpointing to save memory during backpropagation.
-    model = prepare_model_for_kbit_training(model)
+    # use_gradient_checkpointing=True avoids the float32 memory spike that
+    # causes OOM on T4 — it recomputes activations on the fly instead of storing them
+    model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
 
     return model, tokenizer
 
