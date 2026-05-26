@@ -111,9 +111,11 @@ def load_model_and_tokenizer(cfg: TrainConfig):
         low_cpu_mem_usage=True,  # stream weights to GPU instead of loading all in CPU RAM first
     )
 
-    # use_gradient_checkpointing=True avoids the float32 memory spike that
-    # causes OOM on T4 — it recomputes activations on the fly instead of storing them
-    model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
+    # Manually enable gradient checkpointing instead of prepare_model_for_kbit_training.
+    # The latter casts layer norms to float32 which causes a 10GB spike on T4.
+    # These two calls give the same training behaviour without touching weight dtypes.
+    model.gradient_checkpointing_enable()
+    model.enable_input_require_grads()
 
     return model, tokenizer
 
