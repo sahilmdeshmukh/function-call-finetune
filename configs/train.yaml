@@ -1,0 +1,45 @@
+# Base model to fine-tune
+model_name: google/gemma-4-e4b-it
+
+# Where to save checkpoints during training
+# If Colab disconnects, training resumes from here
+output_dir: checkpoints/gemma-tool
+
+# LoRA adapter settings
+lora_r: 16          # Rank: controls adapter size. 16 = good quality/memory balance
+lora_alpha: 32      # Scaling factor: always 2x lora_r
+lora_dropout: 0.05  # Randomly zero out 5% of adapter weights to prevent overfitting
+lora_target_modules: # Which layers inside the model to attach adapters to
+  - q_proj           # Query projection (attention)
+  - k_proj           # Key projection (attention)
+  - v_proj           # Value projection (attention)
+  - o_proj           # Output projection (attention)
+  - gate_proj        # MLP layers
+  - up_proj
+  - down_proj
+
+# Training hyperparameters
+learning_rate: 2e-4                    # Step size for each weight update
+per_device_train_batch_size: 2         # Examples processed per GPU step
+gradient_accumulation_steps: 8         # Accumulate 8 steps → effective batch of 16
+num_train_epochs: 1                    # One full pass through the dataset
+max_seq_length: 2048                   # Max tokens per example (longer = more memory)
+warmup_ratio: 0.05                     # First 5% of steps use gradually increasing LR
+lr_scheduler_type: cosine              # LR decays smoothly to 0 by end of training
+bf16: true                             # Use bfloat16 precision (faster, less memory)
+
+# Data paths (produced by make data)
+train_file: data/train.jsonl
+val_file: data/val.jsonl
+
+# Logging and saving
+logging_steps: 25                      # Print loss every 25 steps
+save_steps: 200                        # Save a checkpoint every 200 steps
+eval_steps: 200                        # Run validation every 200 steps
+save_total_limit: 3                    # Keep only the 3 most recent checkpoints
+
+# Weights & Biases experiment tracking
+wandb_project: tool-use-specialist
+
+# Hugging Face Hub — where the final adapter gets pushed
+hub_model_id: sahilmdeshmukh/gemma-4-e4b-tool-use-lora
