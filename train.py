@@ -100,7 +100,7 @@ def load_model_and_tokenizer(cfg: TrainConfig):
     model = AutoModelForCausalLM.from_pretrained(
         cfg.model_name,
         quantization_config=bnb_config,
-        device_map="auto",
+        device_map={"": "cuda:0"},  # force all layers onto GPU — avoids slow CPU offloading
         token=hf_token,
         low_cpu_mem_usage=True,  # stream weights to GPU instead of loading all in CPU RAM first
     )
@@ -146,6 +146,11 @@ def load_datasets(cfg: TrainConfig):
     print("\n--- Sample training text (first 300 chars) ---")
     print(sample[:300])
     print("----------------------------------------------\n")
+
+    # Filter out examples over 4000 chars (~1024 tokens) — long sequences make steps slow
+    train_ds = train_ds.filter(lambda x: len(x["text"]) <= 4000)
+    val_ds   = val_ds.filter(lambda x: len(x["text"]) <= 4000)
+    print(f"After length filter — train: {len(train_ds):,}  val: {len(val_ds):,}")
 
     return train_ds, val_ds
 
