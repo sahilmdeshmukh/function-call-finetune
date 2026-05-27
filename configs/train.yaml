@@ -33,9 +33,9 @@ max_seq_length: 1024     # explicit — without this SFTConfig defaults to model
 max_train_samples: 800   # set to null to train on full dataset (~54k examples)
 
 # Logging
-logging_steps: 25
-save_steps: 200
-eval_steps: 200
+logging_steps: 5
+save_steps: 10
+eval_steps: 50
 save_total_limit: 3
 wandb_project: tool-use-specialist
 

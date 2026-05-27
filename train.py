@@ -168,7 +168,9 @@ def train(cfg: TrainConfig):
 
     # --- Build model ---
     model, tokenizer = load_model_and_tokenizer(cfg)
-    tokenizer.model_max_length = 1024  # cap sequence length — keeps steps fast
+    tokenizer.model_max_length = 1024
+    tokenizer.truncation_side = "right"
+    tokenizer.padding_side = "right"
     model = attach_lora(model, cfg)
 
     # --- Data ---
