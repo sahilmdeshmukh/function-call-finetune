@@ -45,6 +45,7 @@ class TrainConfig:
     # Data
     train_file: str = "data/train.jsonl"
     val_file: str = "data/val.jsonl"
+    max_train_samples: int = None  # None = use full dataset; set to e.g. 800 for a quick run
 
     # Logging
     logging_steps: int = 25
@@ -151,6 +152,11 @@ def load_datasets(cfg: TrainConfig):
     train_ds = train_ds.filter(lambda x: len(x["text"]) <= 4000)
     val_ds   = val_ds.filter(lambda x: len(x["text"]) <= 4000)
     print(f"After length filter — train: {len(train_ds):,}  val: {len(val_ds):,}")
+
+    if cfg.max_train_samples is not None:
+        train_ds = train_ds.select(range(min(cfg.max_train_samples, len(train_ds))))
+        val_ds   = val_ds.select(range(min(cfg.max_train_samples // 8, len(val_ds))))
+        print(f"After sample cap    — train: {len(train_ds):,}  val: {len(val_ds):,}")
 
     return train_ds, val_ds
 

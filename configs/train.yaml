@@ -29,6 +29,7 @@ bf16: true
 # Data
 train_file: data/train.jsonl
 val_file: data/val.jsonl
+max_train_samples: 800   # set to null to train on full dataset (~54k examples)
 
 # Logging
 logging_steps: 25
