@@ -35,6 +35,7 @@ class TrainConfig:
     # Training
     learning_rate: float = 2e-4
     per_device_train_batch_size: int = 2
+    per_device_eval_batch_size: int = 1
     gradient_accumulation_steps: int = 8
     num_train_epochs: int = 1
     max_seq_length: int = 2048
@@ -183,6 +184,7 @@ def train(cfg: TrainConfig):
         output_dir=cfg.output_dir,
         num_train_epochs=cfg.num_train_epochs,
         per_device_train_batch_size=cfg.per_device_train_batch_size,
+        per_device_eval_batch_size=cfg.per_device_eval_batch_size,
         gradient_accumulation_steps=cfg.gradient_accumulation_steps,
         learning_rate=cfg.learning_rate,
         lr_scheduler_type=cfg.lr_scheduler_type,
