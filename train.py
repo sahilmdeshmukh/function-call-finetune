@@ -195,6 +195,7 @@ def train(cfg: TrainConfig):
         load_best_model_at_end=True,        # At the end, restore the best checkpoint
         metric_for_best_model="eval_loss",  # "best" = lowest validation loss
         report_to="wandb",                  # Send all metrics to Weights & Biases
+        max_seq_length=cfg.max_seq_length,  # must be explicit — default is model max (8192 for Gemma 2)
         dataset_text_field="text",          # Which column in the dataset to train on
         packing=False,                      # Don't pack multiple short examples together
     )

@@ -19,8 +19,8 @@ lora_target_modules:
 
 # Training hyperparameters
 learning_rate: 0.0002
-per_device_train_batch_size: 2
-gradient_accumulation_steps: 8         # Effective batch = 2 * 8 = 16
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 16        # Effective batch = 1 * 16 = 16
 num_train_epochs: 1
 warmup_ratio: 0.05
 lr_scheduler_type: cosine
@@ -29,6 +29,7 @@ bf16: true
 # Data
 train_file: data/train.jsonl
 val_file: data/val.jsonl
+max_seq_length: 1024     # explicit — without this SFTConfig defaults to model max (8192)
 max_train_samples: 800   # set to null to train on full dataset (~54k examples)
 
 # Logging
