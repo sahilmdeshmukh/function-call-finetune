@@ -35,7 +35,7 @@ max_train_samples: 800   # set to null to train on full dataset (~54k examples)
 # Logging
 logging_steps: 5
 save_steps: 10
-eval_steps: 50
+eval_steps: 10
 save_total_limit: 3
 wandb_project: tool-use-specialist
 
