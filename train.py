@@ -41,6 +41,8 @@ class TrainConfig:
     warmup_ratio: float = 0.05
     lr_scheduler_type: str = "cosine"
     bf16: bool = True
+    fp16: bool = False
+    use_4bit: bool = True
 
     # Data
     train_file: str = "data/train.jsonl"
@@ -66,45 +68,41 @@ def load_config(path: str) -> TrainConfig:
 
 
 def load_model_and_tokenizer(cfg: TrainConfig):
-    """Load model in 4-bit NF4 quantization + its tokenizer."""
+    """Load model with 4-bit NF4 quantization (T4) or fp16 (P100 fallback)."""
     hf_token = os.getenv("HF_TOKEN")
 
-    # --- Tokenizer ---
-    # The tokenizer converts raw text into token IDs (numbers) the model understands.
-    # padding_side="right" is required by SFTTrainer to avoid shape mismatches.
     tokenizer = AutoTokenizer.from_pretrained(
         cfg.model_name,
         token=hf_token,
         padding_side="right",
     )
 
-    # --- 4-bit quantization config ---
-    # This tells bitsandbytes HOW to compress the model weights when loading.
-    # NF4 = NormalFloat4, a 4-bit format designed for neural net weights.
-    # double_quant = quantize the quantization constants too (saves ~0.4GB extra).
-    # compute_dtype = even though weights are stored in 4-bit, actual
-    #   matrix multiplications happen in bfloat16 for speed and stability.
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_double_quant=True,
-        bnb_4bit_compute_dtype=torch.bfloat16,
-    )
-
-    # --- Model ---
-    # device_map="auto" lets HuggingFace decide which GPU/CPU layers go where.
-    # On a single T4, everything lands on cuda:0.
-    # Free any leftover GPU memory from previous runs before loading
     gc.collect()
     torch.cuda.empty_cache()
 
-    model = AutoModelForCausalLM.from_pretrained(
-        cfg.model_name,
-        quantization_config=bnb_config,
-        device_map={"": "cuda:0"},  # force all layers onto GPU — avoids slow CPU offloading
-        token=hf_token,
-        low_cpu_mem_usage=True,  # stream weights to GPU instead of loading all in CPU RAM first
-    )
+    if cfg.use_4bit:
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_double_quant=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            cfg.model_name,
+            quantization_config=bnb_config,
+            device_map={"": "cuda:0"},
+            token=hf_token,
+            low_cpu_mem_usage=True,
+        )
+    else:
+        # P100 fallback: fp16, no bitsandbytes (P100 is sm_60, bitsandbytes needs sm_70+)
+        model = AutoModelForCausalLM.from_pretrained(
+            cfg.model_name,
+            torch_dtype=torch.float16,
+            device_map={"": "cuda:0"},
+            token=hf_token,
+            low_cpu_mem_usage=True,
+        )
 
     return model, tokenizer
 
@@ -187,7 +185,8 @@ def train(cfg: TrainConfig):
         learning_rate=cfg.learning_rate,
         lr_scheduler_type=cfg.lr_scheduler_type,
         warmup_ratio=cfg.warmup_ratio,
-        bf16=cfg.bf16,
+        bf16=cfg.bf16 and not cfg.fp16,
+        fp16=cfg.fp16,
         logging_steps=cfg.logging_steps,
         save_steps=cfg.save_steps,
         eval_steps=cfg.eval_steps,

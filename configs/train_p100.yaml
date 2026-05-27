@@ -1,0 +1,36 @@
+model_name: google/gemma-2-2b-it
+output_dir: checkpoints/gemma-tool
+
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+learning_rate: 0.0002
+per_device_train_batch_size: 1   # smaller batch — no 4-bit compression on P100
+gradient_accumulation_steps: 16  # effective batch = 1 * 16 = 16 (same as T4 config)
+num_train_epochs: 1
+warmup_ratio: 0.05
+lr_scheduler_type: cosine
+bf16: false
+fp16: true       # P100 supports fp16 but not bf16
+use_4bit: false  # bitsandbytes requires sm_70+; P100 is sm_60
+
+train_file: data/train.jsonl
+val_file: data/val.jsonl
+max_train_samples: 800
+
+logging_steps: 25
+save_steps: 200
+eval_steps: 200
+save_total_limit: 3
+wandb_project: tool-use-specialist
+
+hub_model_id: sahilmdeshmukh/gemma-2-2b-tool-use-lora
