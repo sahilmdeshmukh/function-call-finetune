@@ -58,7 +58,7 @@ class TrainConfig:
     wandb_project: str = "tool-use-specialist"
 
     # Hub
-    hub_model_id: str = "sahilmdeshmukh/gemma-2-2b-tool-use-lora"
+    hub_model_id: str = "Sahil3717/gemma-2-2b-tool-use-lora"
 
 
 def load_config(path: str) -> TrainConfig:

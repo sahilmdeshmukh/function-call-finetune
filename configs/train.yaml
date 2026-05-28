@@ -41,4 +41,4 @@ save_total_limit: 3
 wandb_project: tool-use-specialist
 
 # Hugging Face Hub
-hub_model_id: sahilmdeshmukh/gemma-2-2b-tool-use-lora
+hub_model_id: Sahil3717/gemma-2-2b-tool-use-lora
