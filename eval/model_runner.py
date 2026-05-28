@@ -89,14 +89,25 @@ def _infer(model, tokenizer, samples: list[dict]) -> list[dict]:
         prompt   = SYSTEM_PROMPT_TEMPLATE.format(tools_json=json.dumps(tools, indent=2))
         messages = [{"role": "user", "content": f"{prompt}\n\n{rec['query']}"}]
 
-        inputs = tokenizer.apply_chat_template(
-            messages, return_tensors="pt", add_generation_prompt=True
-        ).to(model.device)
+        try:
+            inputs = tokenizer.apply_chat_template(
+                messages, return_tensors="pt", add_generation_prompt=True
+            ).to(model.device)
 
-        with torch.no_grad():
-            out = model.generate(inputs, max_new_tokens=128, temperature=0.1, do_sample=True)
+            with torch.no_grad():
+                out = model.generate(
+                    inputs,
+                    max_new_tokens=128,
+                    temperature=0.1,
+                    do_sample=True,
+                    pad_token_id=tokenizer.eos_token_id,
+                )
 
-        predicted_raw    = tokenizer.decode(out[0][inputs.shape[1]:], skip_special_tokens=True)
+            predicted_raw = tokenizer.decode(out[0][inputs.shape[1]:], skip_special_tokens=True)
+        except Exception as e:
+            print(f"[model] Error on {i}: {e}")
+            predicted_raw = ""
+
         predicted_parsed = parse_prediction(predicted_raw)
 
         results.append({
