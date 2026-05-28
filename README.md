@@ -2,10 +2,6 @@
 
 > A 4B-parameter open model fine-tuned for structured tool/function calling. Built on Google's Gemma 4 (April 2026 release).
 
-Third project in a three-part agentic-AI series:
-1. Multi-agent research analyst — orchestrating agents.
-2. Indian Pharma MCP server — building tools agents call.
-3. **This repo** — fine-tuning a model to use tools better.
 
 ## Quickstart
 
