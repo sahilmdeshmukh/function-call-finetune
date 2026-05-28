@@ -38,7 +38,7 @@ Total project cost target: $0. No paid APIs.
 
 ## Status
 - [x] Day 1: dataset prep (xLAM → Gemma chat-template format, splits)
-- [ ] Day 2: QLoRA training + push to HF Hub
+- [x] Day 2: QLoRA training + push to HF Hub (Sahil3717/gemma-2-2b-tool-use-lora)
 - [ ] Day 3: free-only eval harness
 - [ ] Day 4: model card + README + (optional) Spaces demo
 
