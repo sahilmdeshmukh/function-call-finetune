@@ -85,7 +85,8 @@ def _infer(model, tokenizer, samples: list[dict]) -> list[dict]:
     results = []
     for i, rec in enumerate(samples):
         tools    = json.loads(rec["tools_raw"])
-        expected = json.loads(rec["answers_raw"])[0]
+        _ans     = json.loads(rec["answers_raw"])[0]
+        expected = json.loads(_ans) if isinstance(_ans, str) else _ans
         prompt   = SYSTEM_PROMPT_TEMPLATE.format(tools_json=json.dumps(tools, indent=2))
         messages = [{"role": "user", "content": f"{prompt}\n\n{rec['query']}"}]
 
