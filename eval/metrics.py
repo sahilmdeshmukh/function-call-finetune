@@ -31,7 +31,7 @@ def score_example(expected: dict, predicted: dict | list | None) -> dict:
 
     if isinstance(predicted, list):
         predicted = predicted[0] if predicted else None
-    if predicted is None:
+    if not isinstance(predicted, dict):
         return {"name_match": 0, "args_key_match": 0.0, "args_value_match": 0.0}
 
     name_match = int(predicted.get("name") == expected.get("name"))
