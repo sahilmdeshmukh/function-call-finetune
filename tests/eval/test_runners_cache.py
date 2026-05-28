@@ -17,3 +17,13 @@ def test_groq_runner_cache_hit(tmp_path):
     from eval import groq_runner
     result = groq_runner.run(output_path=str(out))
     assert result == _cached_result()
+
+
+def test_gemini_runner_cache_hit(tmp_path):
+    """If output JSON exists, gemini_runner returns it without calling the API."""
+    out = tmp_path / "results_gemini.json"
+    out.write_text(json.dumps(_cached_result()))
+
+    from eval import gemini_runner
+    result = gemini_runner.run(output_path=str(out))
+    assert result == _cached_result()
