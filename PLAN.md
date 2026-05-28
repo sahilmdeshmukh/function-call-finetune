@@ -2,7 +2,7 @@
 
 ## 0. The headline
 
-You're an Agentic AI engineer. P1 showed you *orchestrate* agents. P2 showed you *build tools* for agents. P3 shows you *train a model* that's specifically good at using tools — by fine-tuning the latest open model (Gemma 4 E4B, April 2026) on the Salesforce xLAM-60k function-calling dataset.
+P3 shows you *train a model* that's specifically good at using tools — by fine-tuning the latest open model (Gemma 4 E4B, April 2026) on the Salesforce xLAM-60k function-calling dataset.
 
 **Total cost: $0.** Free Colab T4 for training. Free HF Hub for model hosting. Free Groq + Gemini AI Studio for eval baselines. Free everything.
 
