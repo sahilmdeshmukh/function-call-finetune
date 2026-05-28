@@ -24,8 +24,13 @@ def parse_prediction(raw: str) -> dict | None:
     return None
 
 
-def score_example(expected: dict, predicted: dict | None) -> dict:
+def score_example(expected: dict, predicted: dict | list | None) -> dict:
     """Compute BFCL-style scores for one example."""
+    if predicted is None:
+        return {"name_match": 0, "args_key_match": 0.0, "args_value_match": 0.0}
+
+    if isinstance(predicted, list):
+        predicted = predicted[0] if predicted else None
     if predicted is None:
         return {"name_match": 0, "args_key_match": 0.0, "args_value_match": 0.0}
 
