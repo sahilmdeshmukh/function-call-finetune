@@ -52,7 +52,7 @@ def run(
     )
     tokenizer = AutoTokenizer.from_pretrained(base_model_id, token=hf_token)
     model = AutoModelForCausalLM.from_pretrained(
-        base_model_id, quantization_config=bnb, device_map="auto", token=hf_token
+        base_model_id, quantization_config=bnb, device_map={"": 0}, token=hf_token
     )
     model.eval()
 
