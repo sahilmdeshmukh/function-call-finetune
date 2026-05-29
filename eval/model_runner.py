@@ -79,8 +79,10 @@ def _load_samples(test_path: str, n_samples: int, seed: int) -> list[dict]:
 
 
 def _infer(model, tokenizer, samples: list[dict]) -> list[dict]:
+    import traceback
     import torch
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
     results = []
     for i, rec in enumerate(samples):
@@ -93,7 +95,7 @@ def _infer(model, tokenizer, samples: list[dict]) -> list[dict]:
         try:
             inputs = tokenizer.apply_chat_template(
                 messages, return_tensors="pt", add_generation_prompt=True
-            ).to(model.device)
+            ).to(device)
 
             with torch.no_grad():
                 out = model.generate(
@@ -106,7 +108,10 @@ def _infer(model, tokenizer, samples: list[dict]) -> list[dict]:
 
             predicted_raw = tokenizer.decode(out[0][inputs.shape[1]:], skip_special_tokens=True)
         except Exception as e:
-            print(f"[model] Error on {i}: {e}")
+            if i == 0:
+                traceback.print_exc()
+            else:
+                print(f"[model] Error on {i}: {type(e).__name__}: {e}")
             predicted_raw = ""
 
         predicted_parsed = parse_prediction(predicted_raw)
