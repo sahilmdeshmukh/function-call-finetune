@@ -2,7 +2,10 @@ import gc
 import json
 import os
 import random
+import traceback
 from pathlib import Path
+
+import torch
 
 from eval.metrics import parse_prediction, score_example
 from eval.prompt import SYSTEM_PROMPT_TEMPLATE
@@ -34,18 +37,24 @@ def run(
     samples  = _load_samples(test_path, n_samples, seed)
     hf_token = os.getenv("HF_TOKEN")
 
-    import torch
     from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
     from peft import PeftModel
 
     gc.collect()
     torch.cuda.empty_cache()
 
-    bnb = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16)
+    # float16 not bfloat16 — T4 (sm_75) has no native bf16 tensor cores
+    bnb = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_double_quant=True,
+        bnb_4bit_compute_dtype=torch.float16,
+    )
     tokenizer = AutoTokenizer.from_pretrained(base_model_id, token=hf_token)
     model = AutoModelForCausalLM.from_pretrained(
         base_model_id, quantization_config=bnb, device_map="auto", token=hf_token
     )
+    model.eval()
 
     if not base_done:
         print("[model] Running base model inference...")
@@ -58,6 +67,7 @@ def run(
     if not ft_done:
         print("[model] Attaching fine-tuned adapter...")
         ft_model = PeftModel.from_pretrained(model, adapter_id, token=hf_token)
+        ft_model.eval()
         ft_results = _infer(ft_model, tokenizer, samples)
         _save(ft_results, ft_path)
         del ft_model
@@ -79,11 +89,6 @@ def _load_samples(test_path: str, n_samples: int, seed: int) -> list[dict]:
 
 
 def _infer(model, tokenizer, samples: list[dict]) -> list[dict]:
-    import traceback
-    import torch
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.eval()
     results = []
     for i, rec in enumerate(samples):
         tools    = json.loads(rec["tools_raw"])
@@ -93,29 +98,40 @@ def _infer(model, tokenizer, samples: list[dict]) -> list[dict]:
         messages = [{"role": "user", "content": f"{prompt}\n\n{rec['query']}"}]
 
         try:
-            inputs = tokenizer.apply_chat_template(
-                messages, return_tensors="pt", add_generation_prompt=True
-            ).to(device)
+            # Use tokenize=False first to get a plain string, then tokenize
+            # explicitly — avoids BatchEncoding vs tensor ambiguity across
+            # transformers versions.
+            formatted = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+            enc = tokenizer(
+                formatted,
+                return_tensors="pt",
+                truncation=True,
+                max_length=512,
+            )
+            input_ids      = enc["input_ids"].to("cuda")
+            attention_mask = enc["attention_mask"].to("cuda")
 
             with torch.no_grad():
                 out = model.generate(
-                    inputs,
+                    input_ids=input_ids,
+                    attention_mask=attention_mask,
                     max_new_tokens=128,
-                    temperature=0.1,
-                    do_sample=True,
+                    do_sample=False,
                     pad_token_id=tokenizer.eos_token_id,
                 )
 
-            predicted_raw = tokenizer.decode(out[0][inputs.shape[1]:], skip_special_tokens=True)
+            predicted_raw = tokenizer.decode(
+                out[0][input_ids.shape[1]:], skip_special_tokens=True
+            )
         except Exception as e:
             if i == 0:
                 traceback.print_exc()
-            else:
-                print(f"[model] Error on {i}: {type(e).__name__}: {e}")
+            print(f"[model] Error on {i}: {type(e).__name__}: {e}")
             predicted_raw = ""
 
         predicted_parsed = parse_prediction(predicted_raw)
-
         results.append({
             "query":            rec["query"],
             "expected":         expected,
