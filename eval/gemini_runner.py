@@ -4,7 +4,7 @@ import random
 import time
 from pathlib import Path
 
-import google.generativeai as genai
+from google import genai
 
 from eval.metrics import parse_prediction, score_example
 from eval.prompt import SYSTEM_PROMPT_TEMPLATE
@@ -27,8 +27,7 @@ def run(
     records = _load_jsonl(test_path)
     samples = random.Random(seed).sample(records, min(n_samples, len(records)))
 
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-    model = genai.GenerativeModel("gemini-2.0-flash")
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
     results = []
     for i, rec in enumerate(samples):
@@ -38,7 +37,10 @@ def run(
         prompt   = SYSTEM_PROMPT_TEMPLATE.format(tools_json=json.dumps(tools, indent=2))
 
         try:
-            resp = model.generate_content(f"{prompt}\n\n{rec['query']}")
+            resp = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=f"{prompt}\n\n{rec['query']}",
+            )
             predicted_raw = resp.text
         except Exception as e:
             print(f"[gemini] Error on {i}: {e}")
