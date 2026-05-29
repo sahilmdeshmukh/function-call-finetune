@@ -110,8 +110,15 @@ def _infer(model, tokenizer, samples: list[dict]) -> list[dict]:
                 truncation=True,
                 max_length=512,
             )
-            input_ids      = enc["input_ids"].to("cuda")
-            attention_mask = enc["attention_mask"].to("cuda")
+            # Find where the embedding layer actually lives — works with any
+            # device_map layout (single GPU, multi-GPU, or when Kaggle puts
+            # the model on cuda:1 instead of cuda:0).
+            embed_device = next(
+                p.device for n, p in model.named_parameters()
+                if "embed_tokens" in n
+            )
+            input_ids      = enc["input_ids"].to(embed_device)
+            attention_mask = enc["attention_mask"].to(embed_device)
 
             with torch.no_grad():
                 out = model.generate(
